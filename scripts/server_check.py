@@ -31,7 +31,10 @@ def check(layer):
     folder = ROOT / layer
     run = folder / "run"
     run.mkdir(exist_ok=True)
-    (run / "eula.txt").write_text("eula=true\n")
+    # Never accept the Minecraft EULA on anyone's behalf: this check only runs where the player already accepted it.
+    if not (run / "eula.txt").is_file() or "eula=true" not in (run / "eula.txt").read_text():
+        print(f"SKIP {layer}: no accepted eula.txt in {run} (accept it yourself to run the headless self test)")
+        return True
     (run / "server.properties").write_text(
         f"server-port={PORTS[layer]}\nonline-mode=false\nlevel-type=minecraft\\:flat\nspawn-protection=0\n"
         "motd=BarelyGravestone server check\nmax-tick-time=-1\n")

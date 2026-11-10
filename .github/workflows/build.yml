@@ -48,8 +48,8 @@ jobs:
       - name: Build and unit tests
         working-directory: ${{ matrix.layer }}
         run: ./gradlew build --no-daemon
-      - name: Headless self test
-        run: python3 scripts/server_check.py ${{ matrix.layer }}
+      # The headless self test (scripts/server_check.py) needs a dedicated-server run and therefore an accepted Minecraft EULA,
+      # which CI never accepts on anyone's behalf. It runs locally; CI builds every layer and runs its unit tests.
       - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.layer }}
