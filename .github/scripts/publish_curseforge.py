@@ -21,7 +21,7 @@ import zipfile
 from pathlib import Path
 
 # CurseForge project id (set by the Project Manager).
-PROJECT_ID = 0
+PROJECT_ID = 1796268
 API = "https://minecraft.curseforge.com/api"
 
 # Minecraft version -> Java version name on CurseForge
