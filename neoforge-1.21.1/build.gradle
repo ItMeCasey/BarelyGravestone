@@ -125,7 +125,7 @@ repositories {
 dependencies {
     compileOnly "info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1-SNAPSHOT"
 }
-if (project.hasProperty('mapmod')) {
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'journeymap') {
     dependencies {
         runtimeOnly "curse.maven:journeymap-32274:8923668"
     }
@@ -135,5 +135,18 @@ if (project.hasProperty('mapmod')) {
 if (project.hasProperty('teammod')) {
     dependencies {
         runtimeOnly "curse.maven:open-parties-and-claims-636608:9221991"
+    }
+}
+
+// --- Map mod integration: Antique Atlas (optional, compile-only; nothing of it ships) ---
+// -Pmapmod=antiqueatlas adds the real mod to the dev client.
+dependencies {
+    compileOnly "curse.maven:antique-atlas-227795:6849155"
+}
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'antiqueatlas') {
+    dependencies {
+        runtimeOnly "curse.maven:antique-atlas-227795:6849155"
+        // Antique Atlas needs UnionLib 12.0.x
+        runtimeOnly "curse.maven:unionlib-367806:6813511"
     }
 }

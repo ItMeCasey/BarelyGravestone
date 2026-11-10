@@ -34,15 +34,17 @@ public class JourneyMapMarkers implements IClientPlugin {
         this.api = jmClientApi;
         MarkerSync.install(new MarkerSync.Sink() {
             @Override
-            public void show(ObituaryRecord record) {
+            public boolean show(ObituaryRecord record) {
                 try {
                     Waypoint waypoint = WaypointFactory.createClientWaypoint(GraveMod.MODID,
                             new BlockPos(record.x(), record.y(), record.z()), "Grave of " + record.ownerName(), record.dimension(), false);
                     waypoint.setColor(GOLD);
                     api.addWaypoint(GraveMod.MODID, waypoint);
                     waypoints.put(record.graveId(), waypoint);
+                    return true;
                 } catch (RuntimeException e) {
                     GraveMod.LOGGER.warn("Could not add the JourneyMap marker for grave {}", record.graveId(), e);
+                    return false;
                 }
             }
 

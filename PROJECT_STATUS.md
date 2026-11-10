@@ -17,7 +17,7 @@ Spend: none
 - [x] Config file with comments (Forge config API and NeoForge config API) (w:2)
 - [x] Death marker on JourneyMap, every build: shown at the grave and removed when emptied, seen with real JourneyMap on NeoForge 26.3, Forge 26.3, NeoForge 1.21.1 and NeoForge 1.20.1; compile-checked on the other six (w:5)
 - [x] Death marker on Xaero's Minimap and World Map, VoxelMap, FTB Chunks: n/a: none of them has a public waypoint API (FTB Chunks has no waypoints; Xaero's and VoxelMap make their own death waypoint) (w:1)
-- [ ] Death marker on Antique Atlas (builds exist for 1.21.1 Forge and NeoForge and Forge 1.20.1, none for 26.x): not integrated yet, its marker API has not been looked at (w:2)
+- [x] Death marker on Antique Atlas: skull marker on the atlases the player carries, shown and removed (with the atlas data empty again), seen with real Antique Atlas 8.0.1 on NeoForge 1.21.1; compile-checked on Forge 1.21.1 and Forge 1.20.1 (the only other builds that exist); n/a: no Antique Atlas build for 26.x or NeoForge 1.20.1 (w:2)
 - [x] Team links: Open Parties and Claims verified with a real party on NeoForge 1.21.1 (member counts, outsider does not); FTB Teams written against its published API (javap-checked), builds exist for NeoForge 1.21.1 and 26.1.2 and Forge 1.20.1, not run with the mod installed (w:2)
 - [x] Curios: n/a on Forge 1.21.1 and 26.x (no Curios build); on the others the grave takes what Curios drops with the death loot (tested with a stand-in drop, not with Curios installed) (w:2)
 

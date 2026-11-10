@@ -128,7 +128,7 @@ repositories {
 dependencies {
     compileOnly "info.journeymap:journeymap-api-forge:26.2-2.0.0-SNAPSHOT"
 }
-if (project.hasProperty('mapmod')) {
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'journeymap') {
     dependencies {
         runtimeOnly "curse.maven:journeymap-32274:9049821"
     }

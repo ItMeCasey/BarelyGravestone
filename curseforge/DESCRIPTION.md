@@ -33,7 +33,7 @@ Docs and the full config: [itmecasey.com/wiki/barelygravestone](https://itmecase
 ![Compatibility](https://raw.githubusercontent.com/ItMeCasey/BarelyGravestone/main/branding/banners/h_compat.png)
 
 - **Curios:** items in Curios slots go into the grave with the rest.
-- **JourneyMap:** a gold "Grave of ..." waypoint shows at the grave while you carry the Obituary and disappears when the grave is emptied (all ten builds). Xaero's, VoxelMap and FTB Chunks have no public waypoint API; the wiki lists the state of every map mod.
+- **JourneyMap:** a gold "Grave of ..." waypoint shows at the grave while you carry the Obituary and disappears when the grave is emptied (all ten builds). - **Antique Atlas** (1.21.1 and Forge 1.20.1): a skull marker on the atlases you carry. Xaero's, VoxelMap and FTB Chunks have no public waypoint API; the wiki lists the state of every map mod.
 - **Teams:** Open Parties and Claims parties and FTB Teams parties count for `teamMembersCanOpen` where those mods have a build.
 - Everything is optional: nothing breaks when these mods are missing.
 
@@ -41,7 +41,7 @@ Install: put the jar for your Minecraft version in `mods` on the server and on e
 
 The pictures on this page are illustrations drawn for the listing, not game screenshots.
 
-**Tested:** the shared logic passes its unit tests and a headless server self test of the grave rules (placement in water, rock and void, who may collect, the XP options, expiry, the commands). Forge 26.3, NeoForge 26.3, NeoForge 1.21.1 and NeoForge 1.20.1 were run on a real client with a real death: the pike with the skinned head, the Obituary screen and its live list, the particles and collecting were looked at in screenshots, and the JourneyMap marker was seen coming and going with real JourneyMap on those builds and on Forge 26.3. Both 1.20.1 jars load in real Forge 47.4.28 and NeoForge 47.1.106 installs. Open Parties and Claims was checked with a real party. Curios, FTB Teams and multiplayer with real connections were not checked. The wiki lists what has been checked on each build.
+**Tested:** the shared logic passes its unit tests and a headless server self test of the grave rules (placement in water, rock and void, who may collect, the XP options, expiry, the commands). Forge 26.3, NeoForge 26.3, NeoForge 1.21.1 and NeoForge 1.20.1 were run on a real client with a real death: the pike with the skinned head, the Obituary screen and its live list, the particles and collecting were looked at in screenshots, and the JourneyMap marker was seen coming and going with real JourneyMap on those builds and on Forge 26.3; the Antique Atlas marker was seen with the real mod on NeoForge 1.21.1. Both 1.20.1 jars load in real Forge 47.4.28 and NeoForge 47.1.106 installs. Open Parties and Claims was checked with a real party. Curios, FTB Teams and multiplayer with real connections were not checked. The wiki lists what has been checked on each build.
 
 ![FAQ](https://raw.githubusercontent.com/ItMeCasey/BarelyGravestone/main/branding/banners/h_faq.png)
 

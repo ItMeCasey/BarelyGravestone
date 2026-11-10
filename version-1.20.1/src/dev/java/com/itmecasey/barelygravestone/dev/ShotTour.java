@@ -50,6 +50,7 @@ public final class ShotTour {
     private static final boolean ENABLED = System.getenv("BARELYGRAVESTONE_SHOTS") != null;
     private static final String WORLD = "barelygravestone_shots";
     private static final boolean MAPMOD = System.getenv("BARELYGRAVESTONE_MAPMOD") != null;
+    private static final boolean ATLAS = "atlas".equals(System.getenv("BARELYGRAVESTONE_MAPMOD"));
 
     private enum Stage { WAITING_FOR_MENU, LOADING_WORLD, TOURING, DONE }
 
@@ -175,6 +176,20 @@ public final class ShotTour {
         then(10, () -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)));
         shoot("03_inventory_with_obituary", 10);
         then(2, () -> Minecraft.getInstance().setScreen(null));
+        if (ATLAS) {
+            // Antique Atlas keeps markers per atlas, and the atlas the player died with is in the grave: give a new one and use it.
+            then(2, () -> server("give @p antiqueatlas:empty_antique_atlas"));
+            then(30, () -> {
+                LocalPlayer player = Minecraft.getInstance().player;
+                for (int slot = 0; slot < 9; slot++) {
+                    if (player.getInventory().getItem(slot).getItem().toString().contains("atlas")) {
+                        player.getInventory().selected = slot;
+                    }
+                }
+                Minecraft.getInstance().gameMode.useItem(player, InteractionHand.MAIN_HAND);
+            });
+            then(20, () -> Minecraft.getInstance().setScreen(null));
+        }
         if (MAPMOD) {
             // A map mod is installed: the death marker has to appear while the Obituary is carried.
             until(() -> com.itmecasey.barelygravestone.compat.MarkerSync.shownCount() > 0, 600);

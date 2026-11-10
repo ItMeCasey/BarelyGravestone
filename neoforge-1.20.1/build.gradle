@@ -158,8 +158,19 @@ configurations {
 obfuscation {
     createRemappingConfiguration(configurations.localRuntime)
 }
-if (project.hasProperty('mapmod')) {
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'journeymap') {
     dependencies {
         modLocalRuntime "curse.maven:journeymap-32274:4873863"
+    }
+}
+
+// --- Map mod integration: Antique Atlas (optional, compile-only; nothing of it ships) ---
+// -Pmapmod=antiqueatlas adds the real mod to the dev client.
+dependencies {
+    compileOnly "curse.maven:antique-atlas-227795:6849138"
+}
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'antiqueatlas') {
+    dependencies {
+        modLocalRuntime "curse.maven:antique-atlas-227795:6849138"
     }
 }

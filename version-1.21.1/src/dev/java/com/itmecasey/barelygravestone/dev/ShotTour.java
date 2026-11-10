@@ -50,6 +50,7 @@ public final class ShotTour {
     private static final boolean ENABLED = System.getenv("BARELYGRAVESTONE_SHOTS") != null;
     private static final String WORLD = "barelygravestone_shots";
     private static final boolean MAPMOD = System.getenv("BARELYGRAVESTONE_MAPMOD") != null;
+    private static final boolean ATLAS = "atlas".equals(System.getenv("BARELYGRAVESTONE_MAPMOD"));
 
     private enum Stage { WAITING_FOR_MENU, LOADING_WORLD, TOURING, DONE }
 
@@ -175,6 +176,20 @@ public final class ShotTour {
         then(10, () -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)));
         shoot("03_inventory_with_obituary", 10);
         then(2, () -> Minecraft.getInstance().setScreen(null));
+        if (ATLAS) {
+            // Antique Atlas keeps markers per atlas, and the atlas the player died with is in the grave: give a new one and use it.
+            then(2, () -> server("give @p antiqueatlas:empty_antique_atlas"));
+            then(30, () -> {
+                LocalPlayer player = Minecraft.getInstance().player;
+                for (int slot = 0; slot < 9; slot++) {
+                    if (player.getInventory().getItem(slot).getItem().toString().contains("atlas")) {
+                        player.getInventory().selected = slot;
+                    }
+                }
+                Minecraft.getInstance().gameMode.useItem(player, InteractionHand.MAIN_HAND);
+            });
+            then(20, () -> Minecraft.getInstance().setScreen(null));
+        }
         if (MAPMOD) {
             // A map mod is installed: the death marker has to appear while the Obituary is carried.
             until(() -> com.itmecasey.barelygravestone.compat.MarkerSync.shownCount() > 0, 600);
@@ -243,6 +258,11 @@ public final class ShotTour {
         if (MAPMOD) {
             until(() -> com.itmecasey.barelygravestone.compat.MarkerSync.shownCount() == 0, 600);
             then(2, () -> LOGGER.info("GRAVE-SHOTS marker removed"));
+            if (ATLAS) {
+                // The atlas's own marker data (synced from the server) must be empty again.
+                until(() -> atlasMarkersLeft() == 0, 300);
+                then(2, () -> LOGGER.info("GRAVE-SHOTS atlas marker data is empty again"));
+            }
         }
         then(20, () -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)));
         shoot("11_inventory_after_collect", 15);
@@ -272,6 +292,19 @@ public final class ShotTour {
     }
 
     // ---- helpers ----
+
+    /** How many markers the player's atlases hold in this dimension (Antique Atlas dev check). */
+    private static int atlasMarkersLeft() {
+        Minecraft minecraft = Minecraft.getInstance();
+        int total = 0;
+        for (int atlas : hunternif.mc.api.AtlasAPI.getPlayerAtlases(minecraft.player)) {
+            var data = hunternif.mc.impl.atlas.AntiqueAtlas.markersData.getMarkersData(atlas, minecraft.level);
+            if (data != null) {
+                total += data.getMarkersInWorld(minecraft.level.dimension()).size();
+            }
+        }
+        return total;
+    }
 
     private static void then(int delay, Runnable action) {
         STEPS.add(new Step(delay, action, null, 0));

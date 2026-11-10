@@ -150,8 +150,19 @@ repositories {
 dependencies {
     compileOnly "info.journeymap:journeymap-api:1.20-1.9-SNAPSHOT"
 }
-if (project.hasProperty('mapmod')) {
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'journeymap') {
     dependencies {
         runtimeOnly fg.deobf("curse.maven:journeymap-32274:9049826")
+    }
+}
+
+// --- Map mod integration: Antique Atlas (optional, compile-only; nothing of it ships) ---
+// -Pmapmod=antiqueatlas adds the real mod to the dev client.
+dependencies {
+    compileOnly "curse.maven:antique-atlas-227795:6849138"
+}
+if (project.hasProperty('mapmod') && project.property('mapmod') == 'antiqueatlas') {
+    dependencies {
+        runtimeOnly fg.deobf("curse.maven:antique-atlas-227795:6849138")
     }
 }
