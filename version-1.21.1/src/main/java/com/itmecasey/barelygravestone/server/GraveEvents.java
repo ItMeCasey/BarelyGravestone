@@ -85,6 +85,7 @@ public final class GraveEvents {
 
     public static void onServerStarting(MinecraftServer server) {
         GraveStores.open(server);
+        TeamMods.install();
     }
 
     public static void onServerStopped() {
@@ -111,14 +112,20 @@ public final class GraveEvents {
     /** Marks Obituaries in the player's inventory whose grave no longer exists, so the map markers go away. */
     public static void refreshObituaries(ServerPlayer player) {
         var inventory = player.getInventory();
+        boolean changed = false;
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack.is(ModContent.OBITUARY) && !ObituaryData.gone(stack)) {
                 ObituaryRecord record = ObituaryData.read(stack);
                 if (record != null && !GraveStores.registry().contains(record.graveId())) {
                     ObituaryData.markGone(stack);
+                    changed = true;
                 }
             }
+        }
+        if (changed) {
+            // A change made inside a stack is not always noticed by the inventory sync, so send the inventory again.
+            player.inventoryMenu.sendAllDataToRemote();
         }
     }
 }

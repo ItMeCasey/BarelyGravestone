@@ -13,6 +13,7 @@ import com.itmecasey.barelygravestone.menu.ObituaryMenu;
 import com.itmecasey.barelygravestone.server.GraveEvents;
 import com.itmecasey.barelygravestone.server.GraveService;
 import com.itmecasey.barelygravestone.server.GraveStores;
+import com.itmecasey.barelygravestone.server.TeamMods;
 import com.mojang.authlib.GameProfile;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,6 +246,40 @@ public final class SelfTest {
         check("anyone may collect with collectBy=ANYONE", GraveService.canCollect(alex, grave));
         Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, false));
         server.getScoreboard().removePlayerTeam(team);
+        // Team mods are reached by reflection: with none installed (or no party formed) the checks must simply say no.
+        TeamMods.install();
+        LOGGER.info("SELFTEST detail team mods: {}", TeamMods.status());
+        check("team mod lookups fail closed for players in no party (" + TeamMods.status() + ")",
+                !com.itmecasey.barelygravestone.server.TeamLinks.sameTeam(alex, steve.getUUID(), "Steve"));
+        if (System.getenv("BARELYGRAVESTONE_TEAMMOD") != null) {
+            check("the expected team mod was found", TeamMods.status().contains(System.getenv("BARELYGRAVESTONE_TEAMMOD")));
+        }
+        if ("opac".equals(System.getenv("BARELYGRAVESTONE_TEAMMOD"))) {
+            // A real Open Parties and Claims party: Buddy owns it, Steve is a member, Alex is outside.
+            try {
+                Class<?> apiClass = Class.forName("xaero.pac.common.server.api.OpenPACServerAPI");
+                Object api = apiClass.getMethod("get", MinecraftServer.class).invoke(null, server);
+                Object parties = apiClass.getMethod("getPartyManager").invoke(api);
+                Class<?> manager = Class.forName("xaero.pac.common.server.parties.party.api.IPartyManagerAPI");
+                Object party = manager.getMethod("createPartyForOwner", GameProfile.class).invoke(parties, buddy.getGameProfile());
+                Class<?> rank = Class.forName("xaero.pac.common.parties.party.member.PartyMemberRank");
+                Object memberRank = null;
+                for (Object constant : rank.getEnumConstants()) {
+                    if (constant.toString().equals("MEMBER")) {
+                        memberRank = constant;
+                    }
+                }
+                Class<?> partyApi = Class.forName("xaero.pac.common.server.parties.party.api.IServerPartyAPI");
+                partyApi.getMethod("addMember", UUID.class, rank, String.class).invoke(party, steve.getUUID(), memberRank, "Steve");
+                check("an Open Parties and Claims party member counts as team",
+                        com.itmecasey.barelygravestone.server.TeamLinks.sameTeam(buddy, steve.getUUID(), "Steve"));
+                check("a player outside the party does not",
+                        !com.itmecasey.barelygravestone.server.TeamLinks.sameTeam(alex, steve.getUUID(), "Steve"));
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                LOGGER.error("SELFTEST detail OPAC party setup failed", e);
+                check("an Open Parties and Claims party could be set up for the check", false);
+            }
+        }
 
         // A refused click changes nothing.
         GraveService.collect(alex, level, pos, grave);

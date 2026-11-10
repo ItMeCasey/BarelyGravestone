@@ -21,6 +21,12 @@ public final class NeoForgeClient {
         event.registerBlockEntityRenderer(ClientHooks.graveType(), ClientHooks.rendererProvider());
     }
 
+    /** Keeps map-mod death markers in step with the Obituaries the player carries. */
+    @SubscribeEvent
+    public static void clientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        com.itmecasey.barelygravestone.compat.MarkerSync.tick();
+    }
+
     @SubscribeEvent
     public static void screens(RegisterMenuScreensEvent event) {
         event.register(ModContent.obituaryMenu, ObituaryScreen::new);

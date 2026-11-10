@@ -13,6 +13,7 @@ import com.itmecasey.barelygravestone.menu.ObituaryMenu;
 import com.itmecasey.barelygravestone.server.GraveEvents;
 import com.itmecasey.barelygravestone.server.GraveService;
 import com.itmecasey.barelygravestone.server.GraveStores;
+import com.itmecasey.barelygravestone.server.TeamMods;
 import com.mojang.authlib.GameProfile;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,6 +246,14 @@ public final class SelfTest {
         check("anyone may collect with collectBy=ANYONE", GraveService.canCollect(alex, grave));
         Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, false));
         server.getScoreboard().removePlayerTeam(team);
+        // Team mods are reached by reflection: with none installed (or no party formed) the checks must simply say no.
+        TeamMods.install();
+        LOGGER.info("SELFTEST detail team mods: {}", TeamMods.status());
+        check("team mod lookups fail closed for players in no party (" + TeamMods.status() + ")",
+                !com.itmecasey.barelygravestone.server.TeamLinks.sameTeam(alex, steve.getUUID(), "Steve"));
+        if (System.getenv("BARELYGRAVESTONE_TEAMMOD") != null) {
+            check("the expected team mod was found", TeamMods.status().contains(System.getenv("BARELYGRAVESTONE_TEAMMOD")));
+        }
 
         // A refused click changes nothing.
         GraveService.collect(alex, level, pos, grave);

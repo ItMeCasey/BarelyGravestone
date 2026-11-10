@@ -49,6 +49,7 @@ public final class ShotTour {
     private static final Logger LOGGER = LoggerFactory.getLogger("BarelyGravestone");
     private static final boolean ENABLED = System.getenv("BARELYGRAVESTONE_SHOTS") != null;
     private static final String WORLD = "barelygravestone_shots";
+    private static final boolean MAPMOD = System.getenv("BARELYGRAVESTONE_MAPMOD") != null;
 
     private enum Stage { WAITING_FOR_MENU, LOADING_WORLD, TOURING, DONE }
 
@@ -174,6 +175,12 @@ public final class ShotTour {
         then(10, () -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)));
         shoot("03_inventory_with_obituary", 10);
         then(2, () -> Minecraft.getInstance().setScreen(null));
+        if (MAPMOD) {
+            // A map mod is installed: the death marker has to appear while the Obituary is carried.
+            until(() -> com.itmecasey.barelygravestone.compat.MarkerSync.shownCount() > 0, 600);
+            then(2, () -> LOGGER.info("GRAVE-SHOTS marker shown"));
+            shoot("03b_map_marker", 80);
+        }
 
         // The pike with the head, from the front and close up.
         then(5, () -> look(new Vec3(grave.x() + 0.5, grave.y() + 1.6, grave.z() + 4.0), new Vec3(grave.x() + 0.5, grave.y() + 0.8, grave.z() + 0.5)));
@@ -233,6 +240,10 @@ public final class ShotTour {
             minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
         });
         until(() -> GraveStores.registry().all().isEmpty(), 100);
+        if (MAPMOD) {
+            until(() -> com.itmecasey.barelygravestone.compat.MarkerSync.shownCount() == 0, 600);
+            then(2, () -> LOGGER.info("GRAVE-SHOTS marker removed"));
+        }
         then(20, () -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)));
         shoot("11_inventory_after_collect", 15);
         then(2, () -> Minecraft.getInstance().setScreen(null));

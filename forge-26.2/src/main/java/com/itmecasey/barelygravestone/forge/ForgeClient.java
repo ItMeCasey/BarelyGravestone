@@ -12,6 +12,8 @@ final class ForgeClient {
 
     static void install(FMLJavaModLoadingContext context) {
         FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(event -> event.enqueueWork(() -> net.minecraft.client.gui.screens.MenuScreens.register(com.itmecasey.barelygravestone.ModContent.obituaryMenu, com.itmecasey.barelygravestone.client.ObituaryScreen::new)));
+        // Keeps map-mod death markers in step with the Obituaries the player carries.
+        net.minecraftforge.event.TickEvent.ClientTickEvent.Post.BUS.addListener(tick -> com.itmecasey.barelygravestone.compat.MarkerSync.tick());
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event ->
                 event.registerBlockEntityRenderer(ClientHooks.graveType(), ClientHooks.rendererProvider()));
     }

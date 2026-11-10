@@ -94,3 +94,37 @@ if (project.hasProperty('devTools')) {
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
+
+// --- Map mod integration: JourneyMap (optional, compile-only API; nothing of it ships) ---
+// The API comes from JourneyMap's own Maven. -Pmapmod=journeymap adds the real mod to the dev client (from CurseForge via the
+// ItMeCasey mirror when its login is set, else Cursemaven).
+repositories {
+    maven {
+        name = 'JourneyMap'
+        url = 'https://jm.gserv.me/repository/maven-public/'
+        content { includeGroup 'info.journeymap' }
+    }
+    def imcUser = System.getenv('IMC_MAVEN_USER') ?: project.findProperty('imcMavenUser')
+    def imcPass = System.getenv('IMC_MAVEN_PASSWORD') ?: project.findProperty('imcMavenPassword')
+    if (imcUser && imcPass) {
+        maven {
+            name = 'ItMeCasey mirror'
+            url = 'https://itmecasey.com/maven'
+            credentials { username = imcUser; password = imcPass }
+            content { includeGroup 'curse.maven' }
+        }
+    }
+    maven {
+        name = 'Cursemaven (fallback)'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+}
+dependencies {
+    compileOnly "info.journeymap:journeymap-api-forge:26.2-2.0.0-SNAPSHOT"
+}
+if (project.hasProperty('mapmod')) {
+    dependencies {
+        runtimeOnly "curse.maven:journeymap-32274:9049821"
+    }
+}

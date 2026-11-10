@@ -25,5 +25,11 @@ public final class ForgeClient {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> MenuScreens.register(ModContent.obituaryMenu, ObituaryScreen::new));
+        // Keeps map-mod death markers in step with the Obituaries the player carries.
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ClientTickEvent tick) -> {
+            if (tick.phase == net.minecraftforge.event.TickEvent.Phase.END) {
+                com.itmecasey.barelygravestone.compat.MarkerSync.tick();
+            }
+        });
     }
 }
