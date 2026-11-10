@@ -160,6 +160,26 @@ public final class SelfTest {
         return graveAt(level, new BlockPos(e.x(), e.y(), e.z()));
     }
 
+    /**
+     * A flat stone platform with clear air above it, built where the check stands, so the result never depends on the world's
+     * terrain (a game test server makes a normal random world, with oceans, hills and trees). Returns the y of the first air cell.
+     */
+    private static int platform(ServerLevel level, int x, int z) {
+        int base = 100;
+        level.getChunk(new BlockPos(x, base, z));
+        for (int dx = -7; dx <= 7; dx++) {
+            for (int dz = -7; dz <= 7; dz++) {
+                for (int y = base - 4; y < base; y++) {
+                    level.setBlock(new BlockPos(x + dx, y, z + dz), Blocks.STONE.defaultBlockState(), 2);
+                }
+                for (int y = base; y <= base + 10; y++) {
+                    level.setBlock(new BlockPos(x + dx, y, z + dz), Blocks.AIR.defaultBlockState(), 2);
+                }
+            }
+        }
+        return base;
+    }
+
     public static int run(MinecraftServer minecraftServer) {
         server = minecraftServer;
         failures = 0;
@@ -184,7 +204,7 @@ public final class SelfTest {
         int gx = 200;
         int gz = 200;
         level.getChunk(new BlockPos(gx, 0, gz));
-        int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, gx, gz);
+        int ground = platform(level, gx, gz);
 
         // ---- a death on the ground ----
         ServerPlayer steve = player(level, "Steve");
@@ -298,7 +318,7 @@ public final class SelfTest {
         int wx = 230;
         int wz = 230;
         level.getChunk(new BlockPos(wx, 0, wz));
-        int g2 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, wx, wz);
+        int g2 = platform(level, wx, wz);
         for (int dx = -4; dx <= 4; dx++) {
             for (int dz = -4; dz <= 4; dz++) {
                 for (int y = g2 - 4; y <= g2 + 1; y++) {
@@ -321,7 +341,7 @@ public final class SelfTest {
         int rx = 260;
         int rz = 260;
         level.getChunk(new BlockPos(rx, 0, rz));
-        int g3 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, rx, rz);
+        int g3 = platform(level, rx, rz);
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int y = g3 - 3; y <= g3 + 2; y++) {
@@ -366,7 +386,7 @@ public final class SelfTest {
         ServerPlayer sage = player(level, "Sage");
         int sx = 290;
         level.getChunk(new BlockPos(sx, 0, 200));
-        int g4 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, sx, 200);
+        int g4 = platform(level, sx, 200);
         sage.moveTo(sx + 0.5, g4, 200.5, 0.0F, 0.0F);
         sage.getInventory().add(new ItemStack(Items.BREAD, 3));
         sage.setExperienceLevels(30);
@@ -382,7 +402,7 @@ public final class SelfTest {
         ServerPlayer monk = player(level, "Monk");
         int mx = 320;
         level.getChunk(new BlockPos(mx, 0, 200));
-        int g5 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, mx, 200);
+        int g5 = platform(level, mx, 200);
         monk.moveTo(mx + 0.5, g5, 200.5, 0.0F, 0.0F);
         monk.getInventory().add(new ItemStack(Items.BREAD, 3));
         monk.setExperienceLevels(10);
@@ -396,7 +416,7 @@ public final class SelfTest {
         ServerPlayer rich = player(level, "Rich");
         int qx = 350;
         level.getChunk(new BlockPos(qx, 0, 200));
-        int g6 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, qx, 200);
+        int g6 = platform(level, qx, 200);
         rich.moveTo(qx + 0.5, g6, 200.5, 0.0F, 0.0F);
         rich.getInventory().add(new ItemStack(Items.BREAD, 3));
         rich.setExperienceLevels(20);
@@ -450,7 +470,7 @@ public final class SelfTest {
         ServerPlayer owner2 = player(level, "Pilgrim");
         int px = 410;
         level.getChunk(new BlockPos(px, 0, 200));
-        int g7 = level.getHeight(Heightmap.Types.MOTION_BLOCKING, px, 200);
+        int g7 = platform(level, px, 200);
         owner2.moveTo(px + 0.5, g7, 200.5, 0.0F, 0.0F);
         owner2.getInventory().add(new ItemStack(Items.EMERALD, 9));
         GraveEvents.onPlayerDeath(owner2);
