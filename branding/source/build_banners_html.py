@@ -1,0 +1,123 @@
+"""Builds banners.html from the shared studio style (copied from Barely Pipes' banners.html head and pixel font) plus the
+Barely Gravestone scenes. Run once; edit banners.html afterwards if you like.
+
+python branding/source/build_banners_html.py
+"""
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SRC = Path(r"C:\Users\casey\Desktop\BarelyPipes\branding\source\banners.html").read_text(encoding="utf-8")
+head = SRC[: SRC.index("// ---------- helpers")]
+head = head.replace("Renders the Barely Pipes banners", "Renders the Barely Gravestone banners")
+
+body = r'''// ---------- helpers ----------
+function half(c) { c.style.width = c.width / 2 + "px"; c.style.height = c.height / 2 + "px"; return c; }
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "style" ? (e.style.cssText = v) : e.setAttribute(k, v);
+  for (const k of kids) e.append(k);
+  return e;
+}
+function iconImg(px) { return el("img", {class: "icon", src: "../icon/icon_512.png", width: px, height: px}); }
+function pills(list, style = "") {
+  const m = el("div", {class: "meta", style});
+  for (const [t, on] of list) m.append(el("span", {class: "pill" + (on ? " on" : "")}, t));
+  return m;
+}
+function slot(color, count) {
+  return el("div", {class: "slot"}, el("div", {style: `width:26px;height:26px;background:${color};border-radius:3px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.35)`}),
+    count ? el("b", {}, count) : "");
+}
+// The Obituary page, drawn like the in-game screen.
+function page(w) {
+  const p = el("div", {style: `width:${w}px;display:flex;border:6px solid #3a2414;border-radius:4px;background:#e8d8ae;box-shadow:0 18px 40px rgba(0,0,0,.5);color:#3b2a16;font-size:${w > 600 ? 24 : 18}px`});
+  const left = el("div", {style: "flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:8px"},
+    el("div", {style: "color:#8a2a1e;font-weight:700;font-size:1.25em"}, "Obituary"),
+    el("div", {}, "In memory of Steve"), el("div", {}, "Steve was blown up by Creeper"),
+    el("div", {style: "color:#6b5636;margin-top:8px"}, "When"), el("div", {}, "2026-11-09 14:03, day 12"),
+    el("div", {style: "color:#6b5636;margin-top:8px"}, "Where"), el("div", {}, "Overworld, 120 64 -310"));
+  const right = el("div", {style: "flex:1;padding:18px 20px;border-left:6px solid #d6c28f;display:flex;flex-direction:column;gap:10px"},
+    el("div", {style: "color:#6b5636"}, "Still in the grave"));
+  const row = el("div", {style: "display:flex;gap:6px;flex-wrap:wrap"});
+  [["#8c8c96", "64"], ["#4fd8d0", "7"], ["#c9c9d4", ""], ["#c98a3a", "16"], ["#a8b4c0", ""], ["#4fd8d0", ""], ["#7a5a34", ""]].forEach(([c, n]) => row.append(slot(c, n)));
+  right.append(row, el("div", {style: "color:#6b5636;margin-top:auto"}, "7 stacks left"));
+  p.append(left, right);
+  return p;
+}
+// The grave: stone base, pike, head.
+function grave(scale) {
+  const s = scale;
+  const box = (x, y, w, h, c) => `<div style="position:absolute;left:${x * s}px;top:${y * s}px;width:${w * s}px;height:${h * s}px;background:${c}"></div>`;
+  return el("div", {style: `position:relative;width:${16 * s}px;height:${20 * s}px;image-rendering:pixelated;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))`}).appendChild(Object.assign(document.createElement("div"), {innerHTML:
+    box(3, 18, 10, 2, "#7d7d8a") + box(3, 18, 10, 1, "#aaaab8") + box(7, 9, 2, 9, "#6e4a2c") + box(7, 9, 1, 9, "#92683f") +
+    box(4, 0, 8, 8, "#cd8c62") + box(4, 0, 8, 3, "#68409a") + box(4, 3, 1, 3, "#68409a") + box(11, 3, 1, 3, "#68409a") +
+    box(5, 4, 2, 1, "#fff") + box(6, 4, 1, 1, "#1e1828") + box(9, 4, 1, 1, "#1e1828") + box(10, 4, 2, 1, "#fff") + box(5, 7, 6, 1, "#a06444")})).parentNode;
+}
+
+const ASSETS = {
+  banner: [800, 150, (r) => {
+    r.style.cssText += "display:flex;align-items:center;gap:24px;padding:0 28px";
+    r.append(iconImg(104));
+    r.append(el("div", {style: "display:flex;flex-direction:column;align-items:flex-start;gap:11px;flex:1"},
+      half(pixelText("BarelyGravestone", 8)),
+      el("div", {class: "tag", style: "font-size:16px"}, "Your items wait in a grave. ", el("b", {}, "A pike, your head and an Obituary to find it.")),
+      el("div", {class: "meta", style: "gap:6px"},
+        el("span", {class: "pill on", style: "font-size:11px;padding:3px 9px"}, "Forge"),
+        el("span", {class: "pill on", style: "font-size:11px;padding:3px 9px"}, "NeoForge"),
+        el("span", {class: "pill", style: "font-size:11px;padding:3px 9px"}, "Skinned head"),
+        el("span", {class: "pill", style: "font-size:11px;padding:3px 9px"}, "Map markers"))));
+    r.append(grave(7));
+  }],
+  social: [1280, 640, (r) => {
+    r.style.cssText += "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center";
+    r.append(iconImg(190));
+    r.append(pixelText("BarelyGravestone", 9));
+    r.append(el("div", {class: "tag"}, "Graves with your skinned head on a pike, for Forge and NeoForge."));
+    r.append(pills([["Forge", 1], ["NeoForge", 1], ["Obituary book"], ["Configurable XP price"]]));
+  }],
+  features: [1920, 1080, (r) => {
+    r.style.cssText += "display:flex;align-items:center;justify-content:center;padding:40px 80px;gap:90px";
+    r.append(el("div", {style: "display:flex;flex-direction:column;gap:34px;align-items:flex-start;max-width:700px"},
+      el("div", {style: "display:flex;align-items:center;gap:30px"}, iconImg(130), pixelText("BarelyGravestone", 7)),
+      el("div", {class: "tag", style: "font-size:36px"}, "When you die, everything you carry waits in a grave."),
+      el("div", {class: "tag", style: "font-size:28px;line-height:1.5"},
+        "A pike with your own skinned head marks the spot.", el("br"), "An Obituary tells you how, when and where you died, and what is left.", el("br"),
+        "Particles lead you back. Right-click with an empty hand to collect."),
+      pills([["Forge", 1], ["NeoForge", 1], ["Curios slots"], ["Death markers on map mods"], ["MIT license"]])));
+    r.append(el("div", {style: "display:flex;flex-direction:column;align-items:center;gap:36px"}, grave(18), page(760)));
+  }],
+  gallery: [1920, 1080, (r) => {
+    r.style.cssText += "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px";
+    r.append(el("div", {style: "display:flex;align-items:center;gap:30px"}, iconImg(80), pixelText("Your rules", 8)));
+    const grid = el("div", {style: "display:grid;grid-template-columns:repeat(2,780px);gap:30px 60px"});
+    [["collectBy", "OWNER_ONLY or ANYONE. Operators and creative players always get in."],
+     ["teamMembersCanOpen", "Scoreboard teams, FTB Teams and Open Parties and Claims."],
+     ["xpCostPercent", "A share of your XP levels is the price of keeping your items."],
+     ["keepLostXp", "Store that XP in the grave and hand it back when you collect."],
+     ["graveExpiryMinutes", "Graves last forever, or crumble after a timer you choose."],
+     ["showCoordinates", "Hide the coordinates on the Obituary and make players look."]].forEach(([k, v]) => grid.append(
+      el("div", {class: "panel", style: "min-width:0;width:780px;gap:10px"}, el("div", {class: "name", style: "color:#ffe28c"}, k), el("div", {class: "line"}, v))));
+    r.append(grid);
+  }],
+};
+for (const [k, label] of Object.entries({features: "Features", how: "How it works", collect: "Collecting", compat: "Compatibility", faq: "FAQ"})) {
+  ASSETS["h_" + k] = [800, 46, (r) => {
+    r.style.cssText += "display:flex;align-items:center;gap:14px;padding:0 16px;border-top:2px solid var(--gold)";
+    r.append(iconImg(30));
+    r.append(half(pixelText(label, 5)));
+  }];
+}
+
+const name = location.hash.slice(1) || "banner";
+const [w, h, build] = ASSETS[name];
+const root = document.getElementById("root");
+root.className = "stage";
+root.style.cssText = `width:${w}px;height:${h}px`;
+build(root);
+window.ASSET_NAMES = Object.keys(ASSETS);
+</script>
+</body>
+</html>
+'''
+(HERE / "banners.html").write_text(head + body, encoding="utf-8")
+print("wrote banners.html")

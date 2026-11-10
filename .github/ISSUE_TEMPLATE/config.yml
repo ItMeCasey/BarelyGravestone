@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How Barely Gravestone works and what it covers
+    url: https://itmecasey.com/wiki/barelygravestone/
+    about: Graves, the Obituary, collecting rules, the config file and the commands. Read this first.
+  - name: Troubleshooting
+    url: https://itmecasey.com/wiki/barelygravestone/?p=faq
+    about: A grave that did not appear, items you cannot collect, and mixed-mod setups.

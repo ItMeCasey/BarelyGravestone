@@ -1,0 +1,35 @@
+name: Grave or Obituary problem
+description: A grave did not appear, I cannot collect it, or the Obituary shows the wrong thing
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Mod version
+      placeholder: "2026.11.1"
+    validations:
+      required: true
+  - type: input
+    id: loader
+    attributes:
+      label: Loader and Minecraft version
+      placeholder: "NeoForge 1.21.1"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: How did you die, where (dimension, in water or lava, in the void), and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Your config
+      description: The contents of barelygravestone-common.toml, if you changed it.
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: Curios, map mods, claim mods, anything else that touches death or drops.
