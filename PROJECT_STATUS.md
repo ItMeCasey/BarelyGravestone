@@ -32,4 +32,4 @@ Spend: none
 - [x] Branding: icon, banners, headers, social card (w:2)
 - [x] Wiki draft pages in the site folder (home, getting-started, configuration, commands, faq, compatibility, versions, known-gaps) (w:3)
 - [x] GitHub workflows, issue templates, upload script (project id 0 until the CurseForge project exists) (w:2)
-- [ ] Push, CI run, v2026.11.1 tag, CurseForge upload and wiki deploy (project manager) (w:3)
+- [x] Push, CI run, v2026.11.1 tag, CurseForge upload and wiki deploy (project manager, 2026-11-10) (w:3)
