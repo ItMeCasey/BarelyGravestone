@@ -140,8 +140,14 @@ public final class GraveService {
         return Access.canCollect(Settings.collectBy(), owner, team, Settings.teamMembersCanOpen(), privileged);
     }
 
+    /** Test hook: when set, decides who counts as an operator (a game test server gives every player all permissions). */
+    public static java.util.function.Predicate<ServerPlayer> privilegeProbe;
+
     /** Operators and creative players can always open a grave. */
     public static boolean isPrivileged(ServerPlayer player) {
+        if (privilegeProbe != null) {
+            return privilegeProbe.test(player);
+        }
         PermissionSet permissions = player.permissions();
         return player.isCreative() || Commands.LEVEL_GAMEMASTERS.check(permissions);
     }

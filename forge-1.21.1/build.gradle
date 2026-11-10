@@ -53,6 +53,11 @@ minecraft {
         server {
             args '--nogui'
         }
+        // The headless self test runs here (no EULA needed): barelygravestone.selftest starts it once the server is up.
+        gameTestServer {
+            property 'barelygravestone.selftest', 'true'
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
     }
 }
 
@@ -97,6 +102,7 @@ tasks.withType(Test).configureEach {
 if (project.hasProperty('devTools')) {
     sourceSets.main.java.srcDir '../version-1.21.1/src/dev/java'
     sourceSets.main.java.srcDir 'src/dev/java'
+    sourceSets.main.resources.srcDir '../version-1.21.1/src/dev/resources'
 }
 
 tasks.withType(Test).configureEach {

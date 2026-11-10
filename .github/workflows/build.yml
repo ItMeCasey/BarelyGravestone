@@ -48,8 +48,6 @@ jobs:
       - name: Build and unit tests
         working-directory: ${{ matrix.layer }}
         run: ./gradlew build --no-daemon
-      # The headless self test (scripts/server_check.py) needs a dedicated-server run and therefore an accepted Minecraft EULA,
-      # which CI never accepts on anyone's behalf. It runs locally; CI builds every layer and runs its unit tests.
       - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.layer }}
@@ -57,6 +55,16 @@ jobs:
             ${{ matrix.layer }}/build/libs/*.jar
             !${{ matrix.layer }}/build/libs/*-sources.jar
             !${{ matrix.layer }}/build/libs/*-dev.jar
+      - name: Headless self test (game test server, no EULA needed)
+        # Runs after the jars are uploaded: -PdevTools rebuilds the jar with the dev tools in it.
+        working-directory: ${{ matrix.layer }}
+        run: |
+          # The game test server can keep the process alive after the checks finish; stop it after 8 minutes.
+          # Pass or fail is decided by the grep checks below, not by the exit code.
+          timeout 480 ./gradlew runGameTestServer -PdevTools --no-daemon 2>&1 | tee selftest.log || true
+          grep -q "SELFTEST DONE failures=0" selftest.log
+          ! grep -q "SELFTEST FAIL" selftest.log
+          test "$(grep -c "SELFTEST PASS" selftest.log)" -ge 40
 
   package:
     # The ten jars, one per loader and Minecraft version. Forge and NeoForge builds of a version share class names with

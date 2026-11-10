@@ -52,7 +52,7 @@ public final class SelfTest {
     }
 
     public static boolean requested() {
-        return System.getenv("BARELYGRAVESTONE_SELFTEST") != null;
+        return System.getenv("BARELYGRAVESTONE_SELFTEST") != null || System.getProperty("barelygravestone.selftest") != null;
     }
 
     private static void check(String name, boolean ok) {
@@ -166,6 +166,8 @@ public final class SelfTest {
         server = minecraftServer;
         failures = 0;
         GraveStores.open(server);
+        // A game test server starts players in creative mode; the checks need survival players.
+        server.setDefaultGameType(net.minecraft.world.level.GameType.SURVIVAL);
         Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, false));
         try {
             execute();
@@ -231,6 +233,8 @@ public final class SelfTest {
         // ---- who may collect ----
         ServerPlayer alex = player(level, "Alex");
         ServerPlayer buddy = player(level, "Buddy");
+        // Nobody is an operator here unless a check says so (a game test server gives every player all permissions).
+        GraveService.privilegeProbe = p -> false;
         check("owner may collect", GraveService.canCollect(steve, grave));
         check("a stranger may not collect (OWNER_ONLY)", !GraveService.canCollect(alex, grave));
         Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, true));
@@ -254,6 +258,10 @@ public final class SelfTest {
         if (System.getenv("BARELYGRAVESTONE_TEAMMOD") != null) {
             check("the expected team mod was found", TeamMods.status().contains(System.getenv("BARELYGRAVESTONE_TEAMMOD")));
         }
+
+        GraveService.privilegeProbe = p -> p == alex;
+        check("an operator or creative player may always collect", GraveService.canCollect(alex, grave));
+        GraveService.privilegeProbe = p -> false;
 
         // A refused click changes nothing.
         GraveService.collect(alex, level, pos, grave);

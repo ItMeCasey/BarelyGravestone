@@ -41,6 +41,12 @@ neoForge {
             server()
             programArgument '--nogui'
         }
+        // The headless self test runs here (no EULA needed): barelygravestone.selftest starts it once the server is up.
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'barelygravestone.selftest', 'true'
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
     }
 
     mods {
@@ -84,6 +90,7 @@ tasks.withType(Test).configureEach {
 if (project.hasProperty('devTools')) {
     sourceSets.main.java.srcDir '../version-1.21.1/src/dev/java'
     sourceSets.main.java.srcDir 'src/dev/java'
+    sourceSets.main.resources.srcDir '../version-1.21.1/src/dev/resources'
 }
 
 tasks.withType(Test).configureEach {

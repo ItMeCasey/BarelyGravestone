@@ -61,7 +61,7 @@ public final class BarelyGravestoneNeoForge {
         if (GraveMod.DEV) {
             // Development tools (self test, screenshot tour) exist only in builds made with -PdevTools.
             try {
-                Class.forName("com.itmecasey.barelygravestone.neoforge.dev.NeoForgeDev").getMethod("install").invoke(null);
+                Class.forName("com.itmecasey.barelygravestone.neoforge.dev.NeoForgeDev").getMethod("install", IEventBus.class).invoke(null, modBus);
             } catch (ReflectiveOperationException e) {
                 GraveMod.LOGGER.warn("barelygravestone.dev is set but this build has no development tools");
             }

@@ -10,7 +10,7 @@ Spend: none
 - [x] All ten release jars build, hold no dev classes, and the 1.20.1 jars have SRG names (verify_jars: 10 ok, 284 SRG names) (w:3)
 
 ## Features (seen on real clients unless noted)
-- [x] Grave on death with items, armor and off-hand; placement incl. cobblestone support in water, lava and void (headless self test, 45 checks) (w:5)
+- [x] Grave on death with items, armor and off-hand; placement incl. cobblestone support in water, lava and void (headless self test, 46 checks) (w:5)
 - [x] Gravestone block: pike, skinned head renderer, unbreakable in survival (frames: Forge 26.3, NeoForge 26.3, NeoForge 1.21.1, NeoForge 1.20.1) (w:4)
 - [x] Obituary item and book screen with live item list, particles toward the grave (frames, same builds) (w:5)
 - [x] Collect rules: collectBy, teamMembersCanOpen, ops, XP cost and keepLostXp, expiry, /gravestone commands (headless self test) (w:5)

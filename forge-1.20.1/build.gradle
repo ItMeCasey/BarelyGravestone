@@ -50,6 +50,11 @@ minecraft {
         server {
             args '--nogui'
         }
+        // The headless self test runs here (no EULA needed): barelygravestone.selftest starts it once the server is up.
+        gameTestServer {
+            property 'barelygravestone.selftest', 'true'
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
     }
 }
 

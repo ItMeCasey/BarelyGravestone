@@ -32,7 +32,7 @@ cd forge-26.3
 ./gradlew build
 ```
 
-Development tools (a headless self test and a screenshot tour) only build with `-PdevTools`; release jars never contain them. The headless self test runs with `BARELYGRAVESTONE_SELFTEST=1 ./gradlew runServer -PdevTools`.
+Development tools (a headless self test and a screenshot tour) only build with `-PdevTools`; release jars never contain them. The headless self test (46 checks, no EULA needed) runs on the game test server: `./gradlew runGameTestServer -PdevTools`.
 
 ## License
 
