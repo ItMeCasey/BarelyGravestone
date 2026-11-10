@@ -1,0 +1,96 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+}
+
+base.archivesName = "${mod_id}-forge-mc${minecraft_version}"
+version = mod_version
+group = mod_group
+
+// Mojang ships Java 25 to end users in 26.1+, so the mod targets Java 25.
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+// Shared code lives in ../common and is compiled into this loader layer.
+sourceSets {
+    test {
+        java.srcDir '../common/src/test/java'
+    }
+    main {
+        java.srcDir '../version-26.2/src/main/java'
+        java.srcDir '../common/src/main/java'
+        resources.srcDir '../version-26.2/src/main/resources'
+        resources.srcDir '../common/src/main/resources'
+    }
+}
+
+minecraft {
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+            if (project.hasProperty('devTools')) { systemProperty 'barelygravestone.dev', 'true' }
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+        }
+        register('client') {
+            // -PwindowSize=1904x1041 opens the dev client at that size (the screenshot checks need the same layout every run).
+            if (project.hasProperty('windowSize')) {
+                args '--width', project.property('windowSize').split('x')[0], '--height', project.property('windowSize').split('x')[1]
+            }
+        }
+        register('server') {
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Fills in mods.toml and pack.mcmeta from gradle.properties. Forge jars need the pack.mcmeta.
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+        minecraft_version: minecraft_version, forge_version: forge_version,
+        mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+        mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+
+// Unit tests for the shared logic; they need no running game.
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.11.4")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+// Development tools (self test, screenshot tour) live in src/dev and only build with -PdevTools, so a normal build and the
+// release jars never contain them.
+if (project.hasProperty('devTools')) {
+    sourceSets.main.java.srcDir '../version-26.2/src/dev/java'
+    sourceSets.main.java.srcDir 'src/dev/java'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
