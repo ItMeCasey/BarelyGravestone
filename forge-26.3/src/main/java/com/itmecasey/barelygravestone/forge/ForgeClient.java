@@ -11,7 +11,7 @@ final class ForgeClient {
     }
 
     static void install(FMLJavaModLoadingContext context) {
-        FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(event -> event.enqueueWork(ClientHooks::registerScreens));
+        FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(event -> event.enqueueWork(() -> net.minecraft.client.gui.screens.MenuScreens.register(com.itmecasey.barelygravestone.ModContent.obituaryMenu, com.itmecasey.barelygravestone.client.ObituaryScreen::new)));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event ->
                 event.registerBlockEntityRenderer(ClientHooks.graveType(), ClientHooks.rendererProvider()));
     }
