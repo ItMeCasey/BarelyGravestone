@@ -29,6 +29,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 public final class BarelyGravestoneNeoForge {
     public BarelyGravestoneNeoForge(IEventBus modBus, ModContainer container) {
         Settings.install(new NeoForgeSettings());
+        com.itmecasey.barelygravestone.core.script.ModJsBridge.install(new com.itmecasey.barelygravestone.core.script.ScriptApi());
         container.registerConfig(ModConfig.Type.COMMON, NeoForgeSettings.SPEC);
         modBus.addListener(BarelyGravestoneNeoForge::register);
 

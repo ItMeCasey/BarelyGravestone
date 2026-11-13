@@ -35,4 +35,4 @@ Everything needed to fill in the CurseForge project form. Files are in `branding
 
 Rebuild: `python branding/source/make_icon.py`, `python branding/source/build_banners_html.py`, `python branding/source/render_banners.py` (needs Pillow and Google Chrome).
 
-The description is in [`curseforge/DESCRIPTION.md`](../curseforge/DESCRIPTION.md); paste it with the description type set to **Markdown**. Its images load from GitHub, so `branding/` has to be pushed first. Its Tested line says only what was run.
+The description is in [`curseforge/DESCRIPTION.md`](../curseforge/DESCRIPTION.md); paste it with the description type set to **Markdown**. Its images load from GitHub, so `branding/` has to be pushed first.

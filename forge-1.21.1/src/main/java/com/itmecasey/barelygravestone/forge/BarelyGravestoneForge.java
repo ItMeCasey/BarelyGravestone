@@ -28,6 +28,7 @@ import net.minecraftforge.registries.RegisterEvent;
 public final class BarelyGravestoneForge {
     public BarelyGravestoneForge(FMLJavaModLoadingContext context) {
         Settings.install(new ForgeSettings());
+        com.itmecasey.barelygravestone.core.script.ModJsBridge.install(new com.itmecasey.barelygravestone.core.script.ScriptApi());
         context.registerConfig(ModConfig.Type.COMMON, ForgeSettings.SPEC);
         context.getModEventBus().addListener(BarelyGravestoneForge::register);
 

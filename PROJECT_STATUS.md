@@ -5,15 +5,17 @@ Summary: Barely Gravestone is built for all ten targets (Forge and NeoForge on 2
 Spend: none
 
 ## Foundation
-- [x] Ten Gradle modules (forge and neoforge for 26.3, 26.2, 26.1.2, 1.21.1, 1.20.1), version 2026.11.1 everywhere, MIT (w:2)
+- [x] Ten Gradle modules (forge and neoforge for 26.3, 26.2, 26.1.2, 1.21.1, 1.20.1), version 2026.11.2 everywhere, MIT (w:2)
 - [x] Shared Minecraft-free core with unit tests: placement planner, access rules, XP math, grave index, pending Obituaries (16 tests pass in all ten modules) (w:4)
 - [x] All ten release jars build, hold no dev classes, and the 1.20.1 jars have SRG names (verify_jars: 10 ok, 284 SRG names) (w:3)
 
 ## Features (seen on real clients unless noted)
-- [x] Grave on death with items, armor and off-hand; placement incl. cobblestone support in water, lava and void (headless self test, 46 checks) (w:5)
+- [x] Grave on death with items, armor and off-hand; placement incl. cobblestone support in water, lava and void (headless self test, 59 checks) (w:5)
 - [x] Gravestone block: pike, skinned head renderer, unbreakable in survival (frames: Forge 26.3, NeoForge 26.3, NeoForge 1.21.1, NeoForge 1.20.1) (w:4)
 - [x] Obituary item and book screen with live item list, particles toward the grave (frames, same builds) (w:5)
 - [x] Collect rules: collectBy, teamMembersCanOpen, ops, XP cost and keepLostXp, expiry, /gravestone commands (headless self test) (w:5)
+- [x] Optional ModJS scripting: BarelyGravestone global (events, grave reads, option overrides); unit tests in common, 13 self test checks on Forge 26.1.2, 1.21.1 and 1.20.1, ModJS itself not run with the mod (w:4)
+- [x] Hints removed (Obituary tooltip line, Obituary handed-over message, collected message) (w:1)
 - [x] Config file with comments (Forge config API and NeoForge config API) (w:2)
 - [x] Death marker on JourneyMap, every build: shown at the grave and removed when emptied, seen with real JourneyMap on NeoForge 26.3, Forge 26.3, NeoForge 1.21.1 and NeoForge 1.20.1; compile-checked on the other six (w:5)
 - [x] Death marker on Xaero's Minimap and World Map, VoxelMap, FTB Chunks: n/a: none of them has a public waypoint API (FTB Chunks has no waypoints; Xaero's and VoxelMap make their own death waypoint) (w:1)

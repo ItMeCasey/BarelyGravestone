@@ -2,7 +2,7 @@
 
 **Graves for Forge and NeoForge: your items wait under a pike with your own skinned head on top, and an Obituary shows the way back.**
 
-When you die, everything you carry (inventory, armor, off-hand and Curios slots) goes into a gravestone where you fell. The grave is a thin pike with your real skin on its head. You get an Obituary: a book that tells you how, when and where you died and lists what is still in the grave. Hold it and dim particles drift toward the grave. Right-click the grave with an empty hand to collect.
+When you die, everything you carry (inventory, armor, off-hand and Curios slots) goes into a gravestone where you fell. The grave is a thin pike with your real skin on its head. You get an Obituary: a book that tells you how, when and where you died and lists what is still in the grave. Dim particles drift from the Obituary toward the grave, and an empty-hand right-click on the grave collects it.
 
 Docs and the full config: [itmecasey.com/wiki/barelygravestone](https://itmecasey.com/wiki/barelygravestone/)
 
@@ -12,18 +12,18 @@ Docs and the full config: [itmecasey.com/wiki/barelygravestone](https://itmecase
 - **Smart placement:** the nearest valid spot. Die in water or lava and a cobblestone block is set at the surface with the grave on top; with no ground below, a cobblestone goes under the grave. If nothing fits, the items drop as usual.
 - **Your head on a pike:** drawn from the stored game profile, so it shows the dead player's actual skin (offline names get the default skin).
 - **Obituary:** given on respawn (kept for you when your inventory is full). The page shows the death message, the real date and time with the in-game day, the dimension and coordinates (hideable), the XP price, and the stacks still in the grave, updating as items are taken.
+- **Scripting:** optional ModJS support through a `BarelyGravestone` global: grave created, collected and expired events (the first and last can be cancelled), read access to every grave, and overrides for the options.
 - **Server side:** works on dedicated servers and in single player. Everything is saved in the grave, so it survives restarts.
 
 ![How it works](https://raw.githubusercontent.com/ItMeCasey/BarelyGravestone/main/branding/banners/h_how.png)
 
-1. You die. Your items go into a grave; the XP price (if you set one) is taken.
-2. You respawn with an Obituary. Hold it: particles lead you to the grave, in the same dimension only.
-3. Right-click the Obituary to read it, right-click the grave with an empty hand to collect.
-4. Whatever does not fit in your inventory stays in the grave; the grave removes itself when it is empty.
+- On death the items go into a grave and the XP price (if one is set) is taken.
+- The Obituary is given on respawn; its particles point to the grave in the same dimension.
+- Whatever does not fit in the collector's inventory stays in the grave, and the grave removes itself when it is empty.
 
 ![Collecting](https://raw.githubusercontent.com/ItMeCasey/BarelyGravestone/main/branding/banners/h_collect.png)
 
-- `collectBy`: `OWNER_ONLY` (default) or `ANYONE`. A player who may not collect gets a chat message and no items.
+- `collectBy`: `OWNER_ONLY` (default) or `ANYONE`.
 - `teamMembersCanOpen` (default off): members of the dead player's team can collect too (vanilla scoreboard teams, plus FTB Teams and Open Parties and Claims where they exist).
 - Operators and creative players can always collect. Survival players cannot break a grave.
 - `xpCostPercent` (0 to 100, default 0): that share of your XP levels is the price of keeping your items. `keepLostXp` (default off) stores that XP in the grave and hands it to whoever collects.
@@ -33,7 +33,8 @@ Docs and the full config: [itmecasey.com/wiki/barelygravestone](https://itmecase
 ![Compatibility](https://raw.githubusercontent.com/ItMeCasey/BarelyGravestone/main/branding/banners/h_compat.png)
 
 - **Curios:** items in Curios slots go into the grave with the rest.
-- **JourneyMap:** a gold "Grave of ..." waypoint shows at the grave while you carry the Obituary and disappears when the grave is emptied (all ten builds). - **Antique Atlas** (1.21.1 and Forge 1.20.1): a skull marker on the atlases you carry. Xaero's, VoxelMap and FTB Chunks have no public waypoint API; the wiki lists the state of every map mod.
+- **JourneyMap:** a gold "Grave of ..." waypoint shows at the grave while you carry the Obituary and disappears when the grave is emptied (all ten builds).
+- **Antique Atlas** (1.21.1 and Forge 1.20.1): a skull marker on the atlases you carry. Xaero's, VoxelMap and FTB Chunks have no public waypoint API; the wiki lists the state of every map mod.
 - **Teams:** Open Parties and Claims parties and FTB Teams parties count for `teamMembersCanOpen` where those mods have a build.
 - Everything is optional: nothing breaks when these mods are missing.
 

@@ -480,5 +480,102 @@ public final class SelfTest {
         int moved = GraveService.restore(server, pilgrimEntry, alex);
         check("restore hands another player the contents and removes the grave", moved == 9 && count(alex, Items.EMERALD) == 9
                 && !GraveStores.registry().contains(pilgrimEntry.id()));
+
+        // ---- scripting hooks (what the ModJS global drives; no ModJS needed here) ----
+        GraveService.privilegeProbe = p -> false;
+        Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 1, false));
+        com.itmecasey.barelygravestone.core.script.ScriptApi api = new com.itmecasey.barelygravestone.core.script.ScriptApi();
+        List<String> seen = new ArrayList<>();
+        api.beforeCreate(e -> {
+            seen.add("before:" + e.grave().ownerName() + ":" + e.grave().count("minecraft:emerald"));
+            if (e.grave().ownerName().equals("Nogrimm")) {
+                e.cancel();
+            }
+        });
+        api.created(e -> {
+            throw new IllegalStateException("script bug");
+        });
+        api.created(e -> seen.add("created:" + e.grave().ownerName() + ":" + e.grave().full() + ":" + e.grave().totalItems()));
+        api.beforeCollect(e -> {
+            seen.add("collect:" + e.collectorName() + ":" + e.allowed());
+            if (e.collectorName().equals("Guest")) {
+                e.allow();
+            }
+        });
+        api.collected(e -> seen.add("collected:" + e.stacksLeft()));
+        api.expiring(e -> {
+            seen.add("expiring:" + e.grave().ownerName());
+            if (e.grave().ownerName().equals("Eternal")) {
+                e.cancel();
+            }
+        });
+        api.expired(e -> seen.add("expired:" + e.grave().ownerName()));
+
+        ServerPlayer nogrimm = player(level, "Nogrimm");
+        ServerPlayer scripter = player(level, "Scripter");
+        ServerPlayer eternal = player(level, "Eternal");
+        ServerPlayer mortal = player(level, "Mortal");
+        ServerPlayer guest = player(level, "Guest");
+        ServerPlayer intruder = player(level, "Intruder");
+        ServerPlayer[] dying = {nogrimm, scripter, eternal, mortal};
+        int hx = 500;
+        for (ServerPlayer p : dying) {
+            level.getChunk(new BlockPos(hx, 0, 200));
+            int hg = platform(level, hx, 200);
+            p.snapTo(hx + 0.5, hg, 200.5, 0.0F, 0.0F);
+            p.getInventory().add(new ItemStack(Items.EMERALD, 5));
+            hx += 30;
+        }
+        GraveEvents.onPlayerDeath(nogrimm);
+        check("a script can cancel a grave: none is made and the items stay", GraveStores.registry().ownedBy(nogrimm.getUUID()).isEmpty()
+                && seen.contains("before:Nogrimm:5") && count(nogrimm, Items.EMERALD) == 5);
+        GraveEvents.onPlayerDeath(scripter);
+        GraveBlockEntity scripterGrave = graveOf(level, scripter);
+        check("beforeCreate and created fire with a full view", scripterGrave != null && seen.contains("before:Scripter:5")
+                && seen.contains("created:Scripter:true:5"));
+        check("a handler that throws does not stop the grave or the next handler", scripterGrave != null && seen.contains("created:Scripter:true:5"));
+        check("the script API reads the grave", api.get(scripterGrave.graveId().toString().substring(0, 8)) != null
+                && api.get(scripterGrave.graveId().toString()).count("minecraft:emerald") == 5
+                && api.gravesOf("scripter").size() == 1 && api.graves().size() == GraveStores.registry().size());
+
+        GraveService.collect(intruder, level, scripterGrave.getBlockPos(), scripterGrave);
+        check("a stranger the script leaves alone is refused", level.getBlockState(scripterGrave.getBlockPos()).is(ModContent.GRAVE)
+                && seen.contains("collect:Intruder:false") && count(intruder, Items.EMERALD) == 0);
+        GraveService.collect(guest, level, scripterGrave.getBlockPos(), scripterGrave);
+        check("a script can allow a stranger to collect", level.getBlockState(scripterGrave.getBlockPos()).isAir()
+                && count(guest, Items.EMERALD) == 5 && seen.contains("collect:Guest:false") && seen.contains("collected:0"));
+
+        // options set by a script change the rules, and resetting goes back
+        check("a script option changes the rules", api.setOption("collectBy", "ANYONE") && Settings.collectBy() == CollectMode.ANYONE);
+        api.resetOption("collectBy");
+        check("resetting an option goes back to the config", Settings.collectBy() == CollectMode.OWNER_ONLY);
+        check("a wrong option value is refused", !api.setOption("xpCostPercent", "lots") && !api.setOption("nope", true));
+
+        GraveEvents.onPlayerDeath(eternal);
+        GraveEvents.onPlayerDeath(mortal);
+        GraveBlockEntity eternalGrave = graveOf(level, eternal);
+        GraveBlockEntity mortalGrave = graveOf(level, mortal);
+        eternalGrave.debugAge(1300L);
+        mortalGrave.debugAge(1300L);
+        check("a script can cancel an expiry: the grave stays and its timer restarts", !eternalGrave.expireIfDue(level)
+                && level.getBlockState(eternalGrave.getBlockPos()).is(ModContent.GRAVE) && !eternalGrave.expireIfDue(level)
+                && seen.contains("expiring:Eternal"));
+        check("expiring and expired fire for a grave that crumbles", mortalGrave.expireIfDue(level)
+                && seen.contains("expiring:Mortal") && seen.contains("expired:Mortal"));
+        check("a script can remove a grave", api.removeGrave(eternalGrave.graveId().toString())
+                && !GraveStores.registry().contains(eternalGrave.graveId()));
+
+        com.itmecasey.barelygravestone.core.script.ScriptHooks.clear();
+        Settings.clearOverride(null);
+        Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, false));
+        int quiet = seen.size();
+        ServerPlayer plain = player(level, "Plain");
+        int plx = 620;
+        level.getChunk(new BlockPos(plx, 0, 200));
+        int plg = platform(level, plx, 200);
+        plain.snapTo(plx + 0.5, plg, 200.5, 0.0F, 0.0F);
+        plain.getInventory().add(new ItemStack(Items.EMERALD, 2));
+        GraveEvents.onPlayerDeath(plain);
+        check("without handlers the mod behaves as before", graveOf(level, plain) != null && seen.size() == quiet);
     }
 }

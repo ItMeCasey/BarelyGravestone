@@ -76,8 +76,6 @@ public class ObituaryItem extends Item {
         lines.accept(Component.translatable("tooltip.barelygravestone.obituary.died", record.dimensionName()).withStyle(net.minecraft.ChatFormatting.GRAY));
         if (ObituaryData.gone(stack)) {
             lines.accept(Component.translatable("tooltip.barelygravestone.obituary.gone").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
-        } else {
-            lines.accept(Component.translatable("tooltip.barelygravestone.obituary.use").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
         }
     }
 

@@ -29,6 +29,7 @@ public final class BarelyGravestoneForge {
     // A constructor without arguments loads on both Forge 47.4 and the NeoForge 1.20.1 fork (47.1), which has no context argument.
     public BarelyGravestoneForge() {
         Settings.install(new ForgeSettings());
+        com.itmecasey.barelygravestone.core.script.ModJsBridge.install(new com.itmecasey.barelygravestone.core.script.ScriptApi());
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ForgeSettings.SPEC);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(BarelyGravestoneForge::register);
 

@@ -4,7 +4,11 @@ import com.itmecasey.barelygravestone.GraveMod;
 import com.itmecasey.barelygravestone.ModContent;
 import com.itmecasey.barelygravestone.core.ObituaryRecord;
 import com.itmecasey.barelygravestone.core.Settings;
+import com.itmecasey.barelygravestone.core.script.GraveEventData;
+import com.itmecasey.barelygravestone.core.script.ScriptHooks;
+import com.itmecasey.barelygravestone.server.GraveService;
 import com.itmecasey.barelygravestone.server.GraveStores;
+import com.itmecasey.barelygravestone.server.ScriptViews;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -85,6 +89,11 @@ public class GraveBlockEntity extends BlockEntity {
         return profile;
     }
 
+    /** Game time when the grave was made, or when a script last restarted its timer. */
+    public long createdGameTime() {
+        return createdGameTime;
+    }
+
     public int storedXp() {
         return storedXp;
     }
@@ -137,8 +146,22 @@ public class GraveBlockEntity extends BlockEntity {
     public boolean expireIfDue(ServerLevel serverLevel) {
         int minutes = Settings.graveExpiryMinutes();
         if (minutes > 0 && createdGameTime != 0 && serverLevel.getGameTime() - createdGameTime >= minutes * 1200L) {
+            var view = ScriptHooks.hasExpiring() || ScriptHooks.hasExpired()
+                    ? ScriptViews.of(this, GraveService.dimensionId(serverLevel)) : null;
+            if (ScriptHooks.hasExpiring()) {
+                var event = new GraveEventData.Expiring(view);
+                ScriptHooks.expiring(event);
+                if (event.cancelled()) {
+                    createdGameTime = serverLevel.getGameTime();
+                    setChanged();
+                    return false;
+                }
+            }
             GraveMod.LOGGER.info("Grave {} of {} at {} expired", graveId, ownerName, worldPosition);
             serverLevel.setBlock(worldPosition, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            if (ScriptHooks.hasExpired()) {
+                ScriptHooks.expired(new GraveEventData.Expired(view));
+            }
             return true;
         }
         return false;

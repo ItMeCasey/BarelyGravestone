@@ -12,6 +12,8 @@ import com.itmecasey.barelygravestone.core.ObituaryRecord;
 import com.itmecasey.barelygravestone.core.Settings;
 import com.itmecasey.barelygravestone.core.TimeText;
 import com.itmecasey.barelygravestone.core.XpMath;
+import com.itmecasey.barelygravestone.core.script.GraveEventData;
+import com.itmecasey.barelygravestone.core.script.ScriptHooks;
 import com.itmecasey.barelygravestone.item.ObituaryData;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +57,21 @@ public final class GraveService {
             return null;
         }
         BlockPos gravePos = new BlockPos(plan.x(), plan.y(), plan.z());
+
+        // The price: a share of the player's XP levels, optionally kept in the grave.
+        int levels = player.experienceLevel;
+        int cost = XpMath.levelsTaken(levels, Settings.xpCostPercent());
+        int points = cost > 0 ? XpMath.pointsTaken(levels, cost) : 0;
+        int stored = Settings.keepLostXp() ? points : 0;
+        if (ScriptHooks.hasBeforeCreate()) {
+            var event = new GraveEventData.BeforeCreate(ScriptViews.preview(player.getUUID().toString(),
+                    player.getName().getString(), dimensionId(level), gravePos.getX(), gravePos.getY(), gravePos.getZ(),
+                    player.getCombatTracker().getDeathMessage().getString(), stored, cost, stacks));
+            ScriptHooks.beforeCreate(event);
+            if (event.cancelled()) {
+                return null;
+            }
+        }
         if (plan.support()) {
             level.setBlock(gravePos.below(), Blocks.COBBLESTONE.defaultBlockState(), Block.UPDATE_ALL);
         }
@@ -66,14 +83,9 @@ public final class GraveService {
             return null;
         }
 
-        // The price: a share of the player's XP levels, optionally kept in the grave.
-        int levels = player.experienceLevel;
-        int cost = XpMath.levelsTaken(levels, Settings.xpCostPercent());
-        int points = cost > 0 ? XpMath.pointsTaken(levels, cost) : 0;
         if (cost > 0) {
             player.giveExperienceLevels(-cost);
         }
-        int stored = Settings.keepLostXp() ? points : 0;
 
         UUID graveId = UUID.randomUUID();
         long now = System.currentTimeMillis();
@@ -89,6 +101,9 @@ public final class GraveService {
         GraveStores.pending().add(player.getUUID(), record.encode());
         GraveMod.LOGGER.info("Grave {} for {} at {} {} {} in {} holds {} stacks", graveId, record.ownerName(), gravePos.getX(),
                 gravePos.getY(), gravePos.getZ(), dimension, stacks.size());
+        if (ScriptHooks.hasCreated()) {
+            ScriptHooks.created(new GraveEventData.Created(ScriptViews.of(grave, dimension)));
+        }
         return grave;
     }
 
@@ -100,7 +115,6 @@ public final class GraveService {
             return;
         }
         var pending = GraveStores.pending();
-        int given = 0;
         while (pending.has(player.getUUID())) {
             String line = pending.peek(player.getUUID()).get(0);
             ObituaryRecord record = ObituaryRecord.decode(line);
@@ -113,10 +127,6 @@ public final class GraveService {
                 break;
             }
             pending.poll(player.getUUID());
-            given++;
-        }
-        if (given > 0) {
-            tell(player, Component.translatable("message.barelygravestone.obituary_given", given));
         }
     }
 
@@ -151,18 +161,30 @@ public final class GraveService {
 
     /** Right-click with an empty hand. */
     public static void collect(ServerPlayer player, ServerLevel level, BlockPos pos, GraveBlockEntity grave) {
-        if (!canCollect(player, grave)) {
+        boolean allowed = canCollect(player, grave);
+        String collectorId = player.getUUID().toString();
+        String collectorName = player.getName().getString();
+        if (ScriptHooks.hasBeforeCollect()) {
+            var event = new GraveEventData.BeforeCollect(ScriptViews.of(grave, dimensionId(level)), collectorId, collectorName,
+                    allowed);
+            ScriptHooks.beforeCollect(event);
+            allowed = event.allowed();
+        }
+        if (!allowed) {
             tell(player, Component.translatable("message.barelygravestone.not_yours", grave.ownerName())
                     .withStyle(ChatFormatting.RED));
             return;
         }
+        var view = ScriptHooks.hasCollected() ? ScriptViews.of(grave, dimensionId(level)) : null;
         giveContents(player, grave);
         if (grave.isEmpty()) {
             level.removeBlock(pos, false);
-            tell(player, Component.translatable("message.barelygravestone.collected"));
         } else {
             tell(player, Component.translatable("message.barelygravestone.partial", grave.items().size())
                     .withStyle(ChatFormatting.YELLOW));
+        }
+        if (view != null) {
+            ScriptHooks.collected(new GraveEventData.Collected(view, collectorId, collectorName, grave.items().size()));
         }
         GraveEvents.refreshObituaries(player);
     }
@@ -239,6 +261,11 @@ public final class GraveService {
         level.removeBlock(new BlockPos(entry.x(), entry.y(), entry.z()), false);
         GraveEvents.refreshObituaries(target);
         return moved;
+    }
+
+    /** The dimension id of a level, such as {@code minecraft:overworld}. */
+    public static String dimensionId(Level level) {
+        return level.dimension().location().toString();
     }
 
     /** True if a level is the dimension of an Obituary record (used for the particle trail). */

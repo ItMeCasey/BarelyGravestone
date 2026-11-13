@@ -20,12 +20,14 @@ public final class GraveStores {
         Path folder = server.getWorldPath(LevelResource.ROOT).resolve("barelygravestone");
         registry = GraveRegistry.open(folder.resolve("graves.txt"));
         pending = PendingStore.open(folder.resolve("pending_obituaries.txt"));
+        ScriptViews.attach(server);
     }
 
     /** Forgets the files when the server stops, so a single-player session does not leak into the next world. */
     public static void close() {
         registry = new GraveRegistry();
         pending = new PendingStore();
+        ScriptViews.detach();
     }
 
     public static GraveRegistry registry() {

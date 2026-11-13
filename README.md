@@ -11,6 +11,7 @@
 - **Collect:** right-click the grave with an empty hand. `collectBy` is `OWNER_ONLY` (default) or `ANYONE`; `teamMembersCanOpen` adds scoreboard teams (and FTB Teams or Open Parties and Claims where they exist). A player who may not collect gets a chat message. Operators and creative players can always collect. Survival players cannot break a grave; collecting removes it when it is empty.
 - **XP price:** `xpCostPercent` takes that share of your XP levels when the grave is made; with `keepLostXp` the XP is stored in the grave and handed to the collector.
 - **Death marker:** on map mods (see the wiki for the list per version) a marker shows at the grave while you carry the Obituary, and goes away when the grave is emptied.
+- **Scripting:** optional ModJS support (`BarelyGravestone` global): grave events, read access to graves, option overrides. See [docs/scripting.md](docs/scripting.md).
 - **Operators:** `/gravestone list [player]`, `tp <id>`, `remove <id>`, `restore <id> [player]` and `obituary <id> [player]`.
 
 Server side authoritative; works on dedicated servers and in single player. The grave data lives in the block entity, so it survives restarts.
@@ -32,7 +33,7 @@ cd forge-26.3
 ./gradlew build
 ```
 
-Development tools (a headless self test and a screenshot tour) only build with `-PdevTools`; release jars never contain them. The headless self test (46 checks, no EULA needed) runs on the game test server: `./gradlew runGameTestServer -PdevTools`.
+Development tools (a headless self test and a screenshot tour) only build with `-PdevTools`; release jars never contain them. The headless self test (59 checks, no EULA needed) runs on the game test server: `./gradlew runGameTestServer -PdevTools`.
 
 ## License
 
