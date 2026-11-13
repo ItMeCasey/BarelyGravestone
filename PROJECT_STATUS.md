@@ -1,6 +1,6 @@
 # Project Status
 <!-- status-format: 1 -->
-Updated: 2026-11-10
+Updated: 2026-11-13
 Summary: Barely Gravestone is built for all ten targets (Forge and NeoForge on 26.3, 26.2, 26.1.2, 1.21.1, 1.20.1); the reference builds were run on real clients, the release flow (CI, tag, CurseForge, wiki deploy) is the project manager's.
 Spend: none
 
@@ -32,4 +32,5 @@ Spend: none
 - [x] Branding: icon, banners, headers, social card (w:2)
 - [x] Wiki draft pages in the site folder (home, getting-started, configuration, commands, faq, compatibility, versions, known-gaps) (w:3)
 - [x] GitHub workflows, issue templates, upload script (project id 0 until the CurseForge project exists) (w:2)
+- [~] CI builds and releases only the versions that changed (plan job and tested path rules written and committed; not yet seen running on GitHub) (w:1)
 - [x] Push, CI run, v2026.11.1 tag, CurseForge upload and wiki deploy (project manager, 2026-11-10) (w:3)
