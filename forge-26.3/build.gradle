@@ -17,6 +17,7 @@ java {
 sourceSets {
     test {
         java.srcDir '../common/src/test/java'
+        resources.srcDir '../common/src/test/resources'
     }
     main {
         java.srcDir '../version-26.3/src/main/java'

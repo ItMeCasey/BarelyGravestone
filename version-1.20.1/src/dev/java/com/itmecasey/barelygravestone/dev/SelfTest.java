@@ -12,6 +12,7 @@ import com.itmecasey.barelygravestone.item.ObituaryData;
 import com.itmecasey.barelygravestone.menu.ObituaryMenu;
 import com.itmecasey.barelygravestone.server.GraveEvents;
 import com.itmecasey.barelygravestone.server.GraveService;
+import com.itmecasey.barelygravestone.server.GraveSavedData;
 import com.itmecasey.barelygravestone.server.GraveStores;
 import com.itmecasey.barelygravestone.server.TeamMods;
 import com.mojang.authlib.GameProfile;
@@ -184,6 +185,15 @@ public final class SelfTest {
         server = minecraftServer;
         failures = 0;
         GraveStores.open(server);
+        // The world of a repeated run keeps its saved data: start every run from an empty store.
+        for (var stale : GraveStores.registry().all()) {
+            GraveStores.registry().remove(stale.id());
+        }
+        for (java.util.UUID stalePlayer : GraveStores.pending().players()) {
+            while (GraveStores.pending().poll(stalePlayer) != null) {
+                // drained
+            }
+        }
         // A game test server starts players in creative mode; the checks need survival players.
         server.setDefaultGameType(net.minecraft.world.level.GameType.SURVIVAL);
         Settings.install(new Config(CollectMode.OWNER_ONLY, 0, false, 0, false));
@@ -197,6 +207,10 @@ public final class SelfTest {
         }
         LOGGER.info("SELFTEST DONE failures={}", failures);
         return failures;
+    }
+
+    private static GraveSavedData roundTrip(GraveSavedData data) {
+        return GraveSavedData.load(data.save(new net.minecraft.nbt.CompoundTag()));
     }
 
     private static void execute() {
@@ -478,6 +492,39 @@ public final class SelfTest {
         int moved = GraveService.restore(server, pilgrimEntry, alex);
         check("restore hands another player the contents and removes the grave", moved == 9 && count(alex, Items.EMERALD) == 9
                 && !GraveStores.registry().contains(pilgrimEntry.id()));
+
+        // ---- world data: the standard saved-data store, the round trip and the import of the old files ----
+        GraveSavedData data = GraveSavedData.of(server);
+        check("the grave data lives in the world's saved data", data.state().registry() == GraveStores.registry()
+                && data.state().pending() == GraveStores.pending() && data.isDirty());
+        GraveSavedData reloaded = roundTrip(data);
+        check("the world data survives a save and load", reloaded.state().graveLines().equals(data.state().graveLines())
+                && reloaded.state().graveLines().size() == GraveStores.registry().size() && GraveStores.registry().size() > 0
+                && reloaded.state().pendingLines().size() == data.state().pendingLines().size()
+                && reloaded.state().legacyImported() == data.state().legacyImported());
+        try {
+            java.nio.file.Path legacy = java.nio.file.Files.createTempDirectory("gravestone-legacy");
+            byte[] oldGraves = ("bc47d706-137e-4f8f-84e7-bdddac6b535a\ta24ba6bb-6f22-3061-afa3-8ffdabaa3cc2\tU3dpbW1lcg==\tminecraft:overworld\t230\t102\t230\t1794609495792\n170c6ba1-81b5-412e-a037-db293acf8c6a\t40601433-c1cd-3ab7-9c5d-c34b2a0844c6\tRmFsbGVy\tminecraft:the_end\t6208\t100\t6000\t1794609496537\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] oldPending = ("a24ba6bb-6f22-3061-afa3-8ffdabaa3cc2\tYmM0N2Q3MDYtMTM3ZS00ZjhmLTg0ZTctYmRkZGFjNmI1MzVhfGEyNGJhNmJiLTZmMjItMzA2MS1hZmEzLThmZmRhYmFhM2NjMnxVM2RwYlcxbGNnPT18VTNkcGJXMWxjaUJrYVdWa3wxNzk0NjA5NDk1NzkyfDF8YldsdVpXTnlZV1owT205MlpYSjNiM0pzWkE9PXwyMzB8MTAyfDIzMHwwfDA=\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            java.nio.file.Files.write(legacy.resolve("graves.txt"), oldGraves);
+            java.nio.file.Files.write(legacy.resolve("pending_obituaries.txt"), oldPending);
+            GraveSavedData fresh = new GraveSavedData();
+            var imported = fresh.state().importLegacy(legacy);
+            check("the files of the older versions import into a fresh world", imported.outcome() == com.itmecasey.barelygravestone.core.WorldState.Outcome.IMPORTED
+                    && imported.graves() == 2 && imported.pending() == 1 && imported.skipped() == 0 && fresh.isDirty()
+                    && fresh.state().registry().findAt("minecraft:the_end", 6208, 100, 6000) != null);
+            GraveSavedData freshLoaded = roundTrip(fresh);
+            check("an imported world survives a save and load, and does not import again", freshLoaded.state().graveLines().equals(fresh.state().graveLines())
+                    && freshLoaded.state().legacyImported() && freshLoaded.state().importLegacy(legacy).outcome()
+                    == com.itmecasey.barelygravestone.core.WorldState.Outcome.NOTHING);
+            check("the old files are left exactly as they were", java.util.Arrays.equals(oldGraves, java.nio.file.Files.readAllBytes(legacy.resolve("graves.txt")))
+                    && java.util.Arrays.equals(oldPending, java.nio.file.Files.readAllBytes(legacy.resolve("pending_obituaries.txt"))));
+            java.nio.file.Files.delete(legacy.resolve("graves.txt"));
+            java.nio.file.Files.delete(legacy.resolve("pending_obituaries.txt"));
+            java.nio.file.Files.delete(legacy);
+        } catch (java.io.IOException e) {
+            check("the import check could not use a temporary folder: " + e.getMessage(), false);
+        }
 
         // ---- scripting hooks (what the ModJS global drives; no ModJS needed here) ----
         GraveService.privilegeProbe = p -> false;

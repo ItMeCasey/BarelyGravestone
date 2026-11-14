@@ -1,10 +1,6 @@
 package com.itmecasey.barelygravestone.core;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -15,7 +11,7 @@ import java.util.UUID;
 /**
  * The index of every grave in a world: who owns it, where it stands, when it was made. The graves themselves keep their
  * contents in their block entities; the index lets the commands list graves without loading chunks, and lets an Obituary
- * learn that its grave is gone. Kept in a plain text file in the world folder.
+ * learn that its grave is gone. The world store ({@link WorldState}) keeps it with the world save.
  */
 public final class GraveRegistry {
     /** One grave in the index. */
@@ -26,41 +22,48 @@ public final class GraveRegistry {
     }
 
     private final Map<UUID, Entry> entries = new LinkedHashMap<>();
-    private Path file;
+    private Runnable onChange = () -> { };
 
-    /** An empty index that is never written to disk. */
+    /** An empty index. */
     public GraveRegistry() {
     }
 
-    /** Loads the index from {@code file} (missing means empty) and saves back to it after every change. */
-    public static GraveRegistry open(Path file) {
+    /** Called after every change, so the world store can mark itself for saving. */
+    public synchronized void setOnChange(Runnable listener) {
+        this.onChange = listener == null ? () -> { } : listener;
+    }
+
+    /** Builds an index from stored lines; a damaged line is skipped. */
+    public static GraveRegistry fromLines(List<String> lines) {
         GraveRegistry registry = new GraveRegistry();
-        registry.file = file;
-        if (Files.isRegularFile(file)) {
-            try {
-                for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                    Entry entry = parse(line);
-                    if (entry != null) {
-                        registry.entries.put(entry.id(), entry);
-                    }
-                }
-            } catch (IOException e) {
-                throw new IllegalStateException("Cannot read " + file, e);
+        for (String line : lines) {
+            Entry entry = parse(line);
+            if (entry != null) {
+                registry.entries.put(entry.id(), entry);
             }
         }
         return registry;
     }
 
+    /** The index as stored lines (one per grave). */
+    public synchronized List<String> lines() {
+        List<String> lines = new ArrayList<>();
+        for (Entry entry : entries.values()) {
+            lines.add(encode(entry));
+        }
+        return lines;
+    }
+
     public synchronized void add(Entry entry) {
         entries.put(entry.id(), entry);
-        save();
+        onChange.run();
     }
 
     /** Removes a grave; returns whether it was in the index. */
     public synchronized boolean remove(UUID id) {
         boolean removed = entries.remove(id) != null;
         if (removed) {
-            save();
+            onChange.run();
         }
         return removed;
     }
@@ -100,13 +103,14 @@ public final class GraveRegistry {
         return entries.size();
     }
 
-    static String encode(Entry e) {
+    public static String encode(Entry e) {
         String name = Base64.getEncoder().encodeToString(e.ownerName().getBytes(StandardCharsets.UTF_8));
         return String.join("\t", e.id().toString(), e.owner().toString(), name, e.dimension(),
                 Integer.toString(e.x()), Integer.toString(e.y()), Integer.toString(e.z()), Long.toString(e.createdMillis()));
     }
 
-    static Entry parse(String line) {
+    /** Parses one stored line; {@code null} for a damaged one. */
+    public static Entry parse(String line) {
         String[] f = line.split("\t");
         if (f.length != 8) {
             return null;
@@ -117,27 +121,6 @@ public final class GraveRegistry {
                     Integer.parseInt(f[4]), Integer.parseInt(f[5]), Integer.parseInt(f[6]), Long.parseLong(f[7]));
         } catch (IllegalArgumentException e) {
             return null;
-        }
-    }
-
-    private void save() {
-        if (file == null) {
-            return;
-        }
-        List<String> lines = new ArrayList<>();
-        for (Entry entry : entries.values()) {
-            lines.add(encode(entry));
-        }
-        try {
-            Path parent = file.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-            Files.write(temp, lines, StandardCharsets.UTF_8);
-            Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot write " + file, e);
         }
     }
 }

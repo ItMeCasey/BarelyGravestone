@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.11.3
+
+- The grave list and the waiting Obituaries are now kept in the world's saved data instead of two text files, so they save with the world, follow world backups and copy with the save.
+- Worlds from 2026.11.2 and older: the old `barelygravestone/graves.txt` and `pending_obituaries.txt` are imported once, every grave and waiting Obituary exactly as it was. The old files are never changed, moved or deleted.
+
 ## 2026.11.2
 
 - Optional ModJS scripting: a `BarelyGravestone` global in server and startup scripts with grave created, collected and expired events (creating, collecting and expiring can be cancelled or decided by the script), read access to every grave (owner, items, XP, position, time left) and overrides for the options. See `docs/scripting.md`.

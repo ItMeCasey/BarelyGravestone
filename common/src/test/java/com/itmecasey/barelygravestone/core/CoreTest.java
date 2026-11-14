@@ -70,14 +70,16 @@ class CoreTest {
 
     @Test
     void registryRoundTrip(@TempDir Path dir) {
-        Path file = dir.resolve("graves.txt");
-        GraveRegistry registry = GraveRegistry.open(file);
+        GraveRegistry registry = new GraveRegistry();
+        int[] changes = {0};
+        registry.setOnChange(() -> changes[0]++);
         UUID owner = UUID.randomUUID();
         GraveRegistry.Entry a = new GraveRegistry.Entry(UUID.randomUUID(), owner, "Steve", "minecraft:overworld", 1, 64, -3, 5L);
         GraveRegistry.Entry b = new GraveRegistry.Entry(UUID.randomUUID(), UUID.randomUUID(), "Älex", "minecraft:the_nether", 8, 30, 9, 6L);
         registry.add(a);
         registry.add(b);
-        GraveRegistry again = GraveRegistry.open(file);
+        assertEquals(2, changes[0]);
+        GraveRegistry again = GraveRegistry.fromLines(registry.lines());
         assertEquals(2, again.size());
         assertEquals(a, again.get(a.id()));
         assertEquals("Älex", again.get(b.id()).ownerName());
@@ -86,17 +88,17 @@ class CoreTest {
         assertNull(again.findAt("minecraft:overworld", 1, 65, -3));
         assertTrue(again.remove(a.id()));
         assertFalse(again.remove(a.id()));
-        assertEquals(1, GraveRegistry.open(file).size());
+        assertEquals(1, GraveRegistry.fromLines(again.lines()).size());
+        assertEquals(0, GraveRegistry.fromLines(List.of("junk", "", "a	b")).size());
     }
 
     @Test
     void pendingRoundTrip(@TempDir Path dir) throws Exception {
-        Path file = dir.resolve("pending.txt");
-        PendingStore store = PendingStore.open(file);
+        PendingStore store = new PendingStore();
         UUID player = UUID.randomUUID();
         store.add(player, "{id:\"a\"}\nsecond line");
         store.add(player, "two");
-        PendingStore again = PendingStore.open(file);
+        PendingStore again = PendingStore.fromLines(store.lines());
         assertTrue(again.has(player));
         assertEquals(List.of("{id:\"a\"}\nsecond line", "two"), again.peek(player));
         assertEquals("{id:\"a\"}\nsecond line", again.poll(player));
@@ -105,7 +107,7 @@ class CoreTest {
         assertEquals("two", again.poll(player));
         assertNull(again.poll(player));
         assertFalse(again.has(player));
-        assertEquals(0, Files.readAllLines(file).size());
+        assertEquals(0, again.lines().size());
     }
 
     @Test

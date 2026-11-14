@@ -1,10 +1,6 @@
 package com.itmecasey.barelygravestone.core;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -14,45 +10,66 @@ import java.util.UUID;
 
 /**
  * Obituaries waiting for their player: made at death, handed over at respawn, or later when the inventory was full. Each
- * waiting item is kept as one opaque line of text (the game code serializes the stack), saved in the world folder so a
- * restart does not lose it.
+ * waiting item is kept as one opaque line of text (the game code serializes the stack), kept in the world store
+ * ({@link WorldState}) so a restart does not lose it.
  */
 public final class PendingStore {
     private final Map<UUID, List<String>> pending = new LinkedHashMap<>();
-    private Path file;
+    private Runnable onChange = () -> { };
 
-    /** An empty store that is never written to disk. */
+    /** An empty store. */
     public PendingStore() {
     }
 
-    /** Loads the store from {@code file} (missing means empty) and saves back to it after every change. */
-    public static PendingStore open(Path file) {
+    /** Called after every change, so the world store can mark itself for saving. */
+    public synchronized void setOnChange(Runnable listener) {
+        this.onChange = listener == null ? () -> { } : listener;
+    }
+
+    /** Builds a store from stored lines ({@code uuid TAB base64}); a damaged line is skipped. */
+    public static PendingStore fromLines(List<String> lines) {
         PendingStore store = new PendingStore();
-        store.file = file;
-        if (Files.isRegularFile(file)) {
-            try {
-                for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                    int tab = line.indexOf('\t');
-                    if (tab > 0) {
-                        try {
-                            UUID player = UUID.fromString(line.substring(0, tab));
-                            String text = new String(Base64.getDecoder().decode(line.substring(tab + 1)), StandardCharsets.UTF_8);
-                            store.pending.computeIfAbsent(player, k -> new ArrayList<>()).add(text);
-                        } catch (IllegalArgumentException e) {
-                            // A damaged line is skipped.
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                throw new IllegalStateException("Cannot read " + file, e);
+        for (String line : lines) {
+            Map.Entry<UUID, String> parsed = parse(line);
+            if (parsed != null) {
+                store.pending.computeIfAbsent(parsed.getKey(), k -> new ArrayList<>()).add(parsed.getValue());
             }
         }
         return store;
     }
 
+    /** One stored line as player and text, or {@code null} when it is damaged. */
+    public static Map.Entry<UUID, String> parse(String line) {
+        if (line == null) {
+            return null;
+        }
+        int tab = line.indexOf('	');
+        if (tab <= 0) {
+            return null;
+        }
+        try {
+            UUID player = UUID.fromString(line.substring(0, tab));
+            String text = new String(Base64.getDecoder().decode(line.substring(tab + 1).trim()), StandardCharsets.UTF_8);
+            return Map.entry(player, text);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** The store as stored lines (one per waiting item). */
+    public synchronized List<String> lines() {
+        List<String> lines = new ArrayList<>();
+        for (Map.Entry<UUID, List<String>> e : pending.entrySet()) {
+            for (String item : e.getValue()) {
+                lines.add(e.getKey() + "	" + Base64.getEncoder().encodeToString(item.getBytes(StandardCharsets.UTF_8)));
+            }
+        }
+        return lines;
+    }
+
     public synchronized void add(UUID player, String item) {
         pending.computeIfAbsent(player, k -> new ArrayList<>()).add(item);
-        save();
+        onChange.run();
     }
 
     public synchronized boolean has(UUID player) {
@@ -76,41 +93,18 @@ public final class PendingStore {
         if (list.isEmpty()) {
             pending.remove(player);
         }
-        save();
+        onChange.run();
         return first;
     }
 
     /** Puts an item back at the front (a hand-over that did not fit). */
     public synchronized void pushFront(UUID player, String item) {
         pending.computeIfAbsent(player, k -> new ArrayList<>()).add(0, item);
-        save();
+        onChange.run();
     }
 
     /** The players that have something waiting. */
     public synchronized List<UUID> players() {
         return new ArrayList<>(pending.keySet());
-    }
-
-    private void save() {
-        if (file == null) {
-            return;
-        }
-        List<String> lines = new ArrayList<>();
-        for (Map.Entry<UUID, List<String>> e : pending.entrySet()) {
-            for (String item : e.getValue()) {
-                lines.add(e.getKey() + "\t" + Base64.getEncoder().encodeToString(item.getBytes(StandardCharsets.UTF_8)));
-            }
-        }
-        try {
-            Path parent = file.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
-            }
-            Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-            Files.write(temp, lines, StandardCharsets.UTF_8);
-            Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot write " + file, e);
-        }
     }
 }
