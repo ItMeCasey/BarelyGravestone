@@ -6,7 +6,7 @@ python branding/source/build_banners_html.py
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SRC = Path(r"C:\Users\casey\Desktop\BarelyPipes\branding\source\banners.html").read_text(encoding="utf-8")
+SRC = Path(r"C:\Users\casey\Desktop\Minecraft Projects\BarelyPipes\branding\source\banners.html").read_text(encoding="utf-8")
 head = SRC[: SRC.index("// ---------- helpers")]
 head = head.replace("Renders the Barely Pipes banners", "Renders the Barely Gravestone banners")
 
